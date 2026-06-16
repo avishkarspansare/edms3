@@ -10,19 +10,19 @@ import SearchIcon from '@mui/icons-material/Search';
 import DepartmentService from '../services/DepartmentService';
 
 function DepartmentComponent() {
-  const [newName, setNewName]           = useState('');
-  const [addMsg, setAddMsg]             = useState({ text: '', ok: true });
+  const [newName, setNewName] = useState('');
+  const [addMsg, setAddMsg] = useState({ text: '', ok: true });
 
-  const [searchName, setSearchName]     = useState('');
-  const [suggestions, setSuggestions]   = useState([]);
+  const [searchName, setSearchName] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
   const [searchResult, setSearchResult] = useState(null);
-  const [searchMsg, setSearchMsg]       = useState('');
-  const [empCount, setEmpCount]         = useState(null);
-  const [allDepts, setAllDepts]         = useState([]);
-  const suggestRef                      = useRef(null);
+  const [searchMsg, setSearchMsg] = useState('');
+  const [empCount, setEmpCount] = useState(null);
+  const [allDepts, setAllDepts] = useState([]);
+  const suggestRef = useRef(null);
 
   useEffect(() => {
-    DepartmentService.getAll().then(res => setAllDepts(res.data)).catch(() => {});
+    DepartmentService.getAll().then(res => setAllDepts(res.data)).catch(() => { });
   }, []);
 
   // Close suggestions on outside click
@@ -172,15 +172,62 @@ function DepartmentComponent() {
           {searchResult && (
             <Box sx={{ mt: 2, border: '1px solid #E0DDD8', borderLeft: '3px solid #D97757' }}>
               {[
-                { label: 'ID',         value: <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', color: '#D97757', fontSize: '0.85rem' }}>#{searchResult.id}</Typography> },
-                { label: 'NAME',       value: searchResult.name },
-                { label: 'EMPLOYEES',  value: empCount !== null ? <Chip label={`${empCount} members`} size="small" sx={{ bgcolor: 'rgba(46,125,94,0.08)', color: '#2E7D5E', border: '1px solid rgba(46,125,94,0.25)', borderRadius: 0, fontFamily: '"JetBrains Mono", monospace', fontSize: '0.65rem' }} /> : '—' },
+                { label: 'ID', value: <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', color: '#D97757', fontSize: '0.85rem' }}>#{searchResult.id}</Typography> },
+                { label: 'NAME', value: searchResult.name },
+                { label: 'EMPLOYEES', value: empCount !== null ? <Chip label={`${empCount} members`} size="small" sx={{ bgcolor: 'rgba(46,125,94,0.08)', color: '#2E7D5E', border: '1px solid rgba(46,125,94,0.25)', borderRadius: 0, fontFamily: '"JetBrains Mono", monospace', fontSize: '0.65rem' }} /> : '—' },
               ].map(({ label, value }, i, arr) => (
                 <Box key={label} sx={{ display: 'flex', alignItems: 'center', px: 2.5, py: 1.5, borderBottom: i < arr.length - 1 ? '1px solid #EDE9E4' : 'none' }}>
                   <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.6rem', letterSpacing: '2px', color: '#8A8A8A', width: 110, flexShrink: 0 }}>
                     {label}
                   </Typography>
                   <Box sx={{ color: '#1A1A1A', fontSize: '0.875rem' }}>{value}</Box>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Box>
+      </Box>
+
+      {/* ── List Departments ─────────────────────────── */}
+      <Box sx={sectionBox}>
+        <Box sx={sectionHeader}>
+          <SearchIcon sx={{ fontSize: 14, color: '#D97757' }} />
+          <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.65rem', letterSpacing: '2px', color: '#8A8A8A' }}>
+            LIST DEPARTMENTS
+          </Typography>
+        </Box>
+        <Box sx={{ p: 2.5 }}>
+          {allDepts.length === 0 ? (
+            <Alert severity="info" sx={{ borderRadius: 0, py: 0.75, fontSize: '0.78rem' }}>
+              No departments available yet.
+            </Alert>
+          ) : (
+            <Box sx={{ display: 'grid', gap: 1 }}>
+              {allDepts.map((dept) => (
+                <Box
+                  key={dept.id}
+                  onClick={() => runSearch(dept.name)}
+                  sx={{
+                    border: '1px solid #E0DDD8',
+                    borderRadius: 0,
+                    p: 1.5,
+                    cursor: 'pointer',
+                    transition: 'background 0.18s ease',
+                    '&:hover': { bgcolor: '#FBF7F3' },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
+                    <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.65rem', letterSpacing: '2px', color: '#8A8A8A', flexShrink: 0, width: 110 }}>
+                      ID
+                    </Typography>
+                    <Typography sx={{ color: '#D97757', fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' }}>#{dept.id}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.65rem', letterSpacing: '2px', color: '#8A8A8A', flexShrink: 0, width: 110 }}>
+                      NAME
+                    </Typography>
+                    <Typography sx={{ color: '#1A1A1A', fontSize: '0.95rem' }}>{dept.name}</Typography>
+                  </Box>
                 </Box>
               ))}
             </Box>
