@@ -1,14 +1,15 @@
 package com.avishkar.service;
 
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.avishkar.exception.ResourceNotFoundException;
 import com.avishkar.model.Department;
 import com.avishkar.repository.DepartmentRepository;
 import com.avishkar.repository.EmployeeRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Map;
 
 @Service
 @Transactional
@@ -18,7 +19,7 @@ public class DepartmentService {
     private final EmployeeRepository employeeRepository;
 
     public DepartmentService(DepartmentRepository departmentRepository,
-                             EmployeeRepository employeeRepository) {
+            EmployeeRepository employeeRepository) {
         this.departmentRepository = departmentRepository;
         this.employeeRepository = employeeRepository;
     }
@@ -41,7 +42,8 @@ public class DepartmentService {
     }
 
     /**
-     * Creates a department; throws IllegalArgumentException if name already exists.
+     * Creates a department; throws IllegalArgumentException if name already
+     * exists.
      */
     public Department create(String name) {
         String trimmed = name.trim();
@@ -58,5 +60,14 @@ public class DepartmentService {
         getById(id); // validates existence
         long count = employeeRepository.countByDepartmentId(id);
         return Map.of("departmentId", id, "employeeCount", count);
+    }
+
+    public void delete(Long id) {
+        Department department = getById(id);
+        long employeeCount = employeeRepository.countByDepartmentId(id);
+        if (employeeCount > 0) {
+            throw new IllegalArgumentException("Cannot delete department with employees assigned");
+        }
+        departmentRepository.delete(department);
     }
 }

@@ -60,7 +60,6 @@ const theme = createTheme({
   components: {
     MuiCssBaseline: {
       styleOverrides: `
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap');
         * { box-sizing: border-box; }
         body { margin: 0; background: #F5F4F2; }
         ::-webkit-scrollbar { width: 4px; }

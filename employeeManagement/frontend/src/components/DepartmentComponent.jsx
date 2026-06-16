@@ -7,6 +7,7 @@ import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DepartmentService from '../services/DepartmentService';
 
 function DepartmentComponent() {
@@ -17,6 +18,7 @@ function DepartmentComponent() {
   const [suggestions, setSuggestions] = useState([]);
   const [searchResult, setSearchResult] = useState(null);
   const [searchMsg, setSearchMsg] = useState('');
+  const [deleteMsg, setDeleteMsg] = useState({ text: '', ok: true });
   const [empCount, setEmpCount] = useState(null);
   const [allDepts, setAllDepts] = useState([]);
   const suggestRef = useRef(null);
@@ -69,6 +71,22 @@ function DepartmentComponent() {
     const trimmed = searchName.trim();
     if (!trimmed) { setSearchMsg('Please enter a name to search.'); return; }
     runSearch(trimmed);
+  };
+
+  const handleDelete = async (e, id) => {
+    e.stopPropagation();
+    if (!window.confirm('Delete this department?')) return;
+    try {
+      await DepartmentService.remove(id);
+      setAllDepts(prev => prev.filter(d => d.id !== id));
+      if (searchResult?.id === id) {
+        setSearchResult(null);
+        setEmpCount(null);
+      }
+      setDeleteMsg({ text: 'Department deleted successfully.', ok: true });
+    } catch (err) {
+      setDeleteMsg({ text: err.response?.data?.error || 'Unable to delete department.', ok: false });
+    }
   };
 
   const sectionBox = { border: '1px solid #E0DDD8', bgcolor: '#FFFFFF', mb: 3 };
@@ -197,6 +215,11 @@ function DepartmentComponent() {
           </Typography>
         </Box>
         <Box sx={{ p: 2.5 }}>
+          {deleteMsg.text && (
+            <Alert severity={deleteMsg.ok ? 'success' : 'error'} sx={{ mb: 2, borderRadius: 0, py: 0.75, fontSize: '0.78rem' }}>
+              {deleteMsg.text}
+            </Alert>
+          )}
           {allDepts.length === 0 ? (
             <Alert severity="info" sx={{ borderRadius: 0, py: 0.75, fontSize: '0.78rem' }}>
               No departments available yet.
@@ -222,11 +245,24 @@ function DepartmentComponent() {
                     </Typography>
                     <Typography sx={{ color: '#D97757', fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' }}>#{dept.id}</Typography>
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.65rem', letterSpacing: '2px', color: '#8A8A8A', flexShrink: 0, width: 110 }}>
-                      NAME
-                    </Typography>
-                    <Typography sx={{ color: '#1A1A1A', fontSize: '0.95rem' }}>{dept.name}</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                      <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.65rem', letterSpacing: '2px', color: '#8A8A8A', flexShrink: 0, width: 110 }}>
+                        NAME
+                      </Typography>
+                      <Typography sx={{ color: '#1A1A1A', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {dept.name}
+                      </Typography>
+                    </Box>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                      onClick={(e) => handleDelete(e, dept.id)}
+                      sx={{ minWidth: 0, px: 1, py: 0.25 }}
+                    >
+                      <DeleteOutlineIcon sx={{ fontSize: 14 }} />
+                    </Button>
                   </Box>
                 </Box>
               ))}
