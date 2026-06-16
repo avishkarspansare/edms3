@@ -1,170 +1,194 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
+import Chip from '@mui/material/Chip';
+import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
 import DepartmentService from '../services/DepartmentService';
 
 function DepartmentComponent() {
-    // ── Add form ──────────────────────────────────────────
-    const [newName, setNewName]     = useState('');
-    const [addMsg, setAddMsg]       = useState({ text: '', ok: true });
+  const [newName, setNewName]           = useState('');
+  const [addMsg, setAddMsg]             = useState({ text: '', ok: true });
 
-    // ── Search form ───────────────────────────────────────
-    const [searchName, setSearchName]     = useState('');
-    const [suggestions, setSuggestions]   = useState([]);
-    const [searchResult, setSearchResult] = useState(null);
-    const [searchMsg, setSearchMsg]       = useState('');
-    const [empCount, setEmpCount]         = useState(null);
+  const [searchName, setSearchName]     = useState('');
+  const [suggestions, setSuggestions]   = useState([]);
+  const [searchResult, setSearchResult] = useState(null);
+  const [searchMsg, setSearchMsg]       = useState('');
+  const [empCount, setEmpCount]         = useState(null);
+  const [allDepts, setAllDepts]         = useState([]);
+  const suggestRef                      = useRef(null);
 
-    // ── Departments list (for suggestions) ────────────────
-    const [allDepts, setAllDepts] = useState([]);
+  useEffect(() => {
+    DepartmentService.getAll().then(res => setAllDepts(res.data)).catch(() => {});
+  }, []);
 
-    useEffect(() => {
-        DepartmentService.getAll()
-            .then(res => setAllDepts(res.data))
-            .catch(() => setAllDepts([]));
-    }, []);
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handler = (e) => { if (suggestRef.current && !suggestRef.current.contains(e.target)) setSuggestions([]); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
-    // ── Add ───────────────────────────────────────────────
-    const handleAdd = async (e) => {
-        e.preventDefault();
-        const trimmed = newName.trim();
-        if (!trimmed) { setAddMsg({ text: 'Please enter a department name.', ok: false }); return; }
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    const trimmed = newName.trim();
+    if (!trimmed) { setAddMsg({ text: 'Department name is required.', ok: false }); return; }
+    try {
+      const res = await DepartmentService.create({ name: trimmed });
+      setAddMsg({ text: `Created: ${res.data.name} (id #${res.data.id})`, ok: true });
+      setNewName('');
+      setAllDepts(prev => [...prev, res.data]);
+    } catch (err) {
+      setAddMsg({ text: err.response?.data?.error || 'Error creating department.', ok: false });
+    }
+  };
 
-        try {
-            const res = await DepartmentService.create({ name: trimmed });
-            setAddMsg({ text: `Department "${res.data.name}" created (id ${res.data.id}).`, ok: true });
-            setNewName('');
-            setAllDepts(prev => [...prev, res.data]);
-        } catch (err) {
-            const msg = err.response?.data?.error || 'Error creating department.';
-            setAddMsg({ text: msg, ok: false });
-        }
-    };
+  const runSearch = async (name) => {
+    setSearchMsg(''); setSearchResult(null); setEmpCount(null); setSuggestions([]);
+    try {
+      const res = await DepartmentService.findByName(name);
+      setSearchResult(res.data);
+      const countRes = await DepartmentService.countEmployees(res.data.id);
+      setEmpCount(countRes.data.employeeCount);
+    } catch (err) {
+      setSearchMsg(err.response?.status === 404 ? 'Department not found.' : 'Search failed.');
+    }
+  };
 
-    // ── Search (shared by button click and suggestion pick) ─
-    const runSearch = async (name) => {
-        setSearchMsg('');
-        setSearchResult(null);
-        setEmpCount(null);
-        setSuggestions([]);
-        try {
-            const res = await DepartmentService.findByName(name);
-            const dept = res.data;
-            setSearchResult(dept);
-            const countRes = await DepartmentService.countEmployees(dept.id);
-            setEmpCount(countRes.data.employeeCount);
-        } catch (err) {
-            setSearchMsg(err.response?.status === 404 ? 'Department not found.' : 'Search error.');
-        }
-    };
+  const handleSearchInput = (e) => {
+    const val = e.target.value;
+    setSearchName(val);
+    setSuggestions(val.trim() ? allDepts.filter(d => d.name.toLowerCase().includes(val.toLowerCase())) : []);
+  };
 
-    const handleSearchInput = (e) => {
-        const val = e.target.value;
-        setSearchName(val);
-        setSuggestions(
-            val.trim()
-                ? allDepts.filter(d => d.name.toLowerCase().includes(val.toLowerCase()))
-                : []
-        );
-    };
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    const trimmed = searchName.trim();
+    if (!trimmed) { setSearchMsg('Please enter a name to search.'); return; }
+    runSearch(trimmed);
+  };
 
-    const pickSuggestion = (name) => {
-        setSearchName(name);
-        runSearch(name);
-    };
+  const sectionBox = { border: '1px solid #E0DDD8', bgcolor: '#FFFFFF', mb: 3 };
+  const sectionHeader = {
+    px: 2.5, py: 1.5, borderBottom: '1px solid #EDE9E4', bgcolor: '#F5F4F2',
+    display: 'flex', alignItems: 'center', gap: 1,
+  };
 
-    const handleSearchSubmit = (e) => {
-        e.preventDefault();
-        const trimmed = searchName.trim();
-        if (!trimmed) { setSearchMsg('Please enter a name to search.'); return; }
-        runSearch(trimmed);
-    };
+  return (
+    <Box sx={{ maxWidth: 640, mx: 'auto', px: 3 }}>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="overline" sx={{ color: '#D97757', display: 'block', mb: 0.25 }}>
+          MANAGEMENT
+        </Typography>
+        <Typography variant="h4" sx={{ color: '#1A1A1A', fontSize: '1.4rem' }}>
+          Departments
+        </Typography>
+      </Box>
 
-    return (
-        <div className="container">
-            <h2 className="page-title mt-4">Departments</h2>
+      {/* ── Add Department ────────────────────────────── */}
+      <Box sx={sectionBox}>
+        <Box sx={sectionHeader}>
+          <AddIcon sx={{ fontSize: 14, color: '#D97757' }} />
+          <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.65rem', letterSpacing: '2px', color: '#8A8A8A' }}>
+            ADD DEPARTMENT
+          </Typography>
+        </Box>
+        <Box sx={{ p: 2.5 }}>
+          <Box component="form" onSubmit={handleAdd} sx={{ display: 'flex', gap: 1 }}>
+            <TextField
+              placeholder="Department name"
+              value={newName}
+              onChange={e => { setNewName(e.target.value); setAddMsg({ text: '', ok: true }); }}
+              fullWidth
+              size="small"
+            />
+            <Button type="submit" variant="contained" sx={{ flexShrink: 0, px: 2.5 }}>ADD</Button>
+          </Box>
+          {addMsg.text && (
+            <Alert severity={addMsg.ok ? 'success' : 'error'} sx={{ mt: 1.5, borderRadius: 0, py: 0.25, fontSize: '0.78rem' }}>
+              {addMsg.text}
+            </Alert>
+          )}
+        </Box>
+      </Box>
 
-            {/* ── Add Department ─────────────────────────── */}
-            <div className="card mb-4">
-                <div className="card-header">Add Department</div>
-                <div className="card-body">
-                    <form onSubmit={handleAdd}>
-                        <div className="d-flex gap-2">
-                            <input
-                                className="form-control"
-                                placeholder="Department name"
-                                value={newName}
-                                onChange={e => setNewName(e.target.value)}
-                            />
-                            <button type="submit" className="btn btn-primary">Add</button>
-                        </div>
-                    </form>
-                    {addMsg.text && (
-                        <p className={addMsg.ok ? 'msg-success' : 'msg-error'}>{addMsg.text}</p>
-                    )}
-                </div>
-            </div>
+      {/* ── Find Department ───────────────────────────── */}
+      <Box sx={sectionBox}>
+        <Box sx={sectionHeader}>
+          <SearchIcon sx={{ fontSize: 14, color: '#D97757' }} />
+          <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.65rem', letterSpacing: '2px', color: '#8A8A8A' }}>
+            FIND DEPARTMENT
+          </Typography>
+        </Box>
+        <Box sx={{ p: 2.5 }}>
+          <Box component="form" onSubmit={handleSearchSubmit} sx={{ display: 'flex', gap: 1, position: 'relative' }} ref={suggestRef}>
+            <Box sx={{ flex: 1, position: 'relative' }}>
+              <TextField
+                placeholder="Search by name"
+                value={searchName}
+                onChange={handleSearchInput}
+                fullWidth
+                size="small"
+                autoComplete="off"
+              />
+              {/* Suggestions dropdown */}
+              {suggestions.length > 0 && (
+                <Box sx={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, border: '1px solid #E0DDD8', borderTop: 'none', bgcolor: '#FFFFFF', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+                  {suggestions.map(dept => (
+                    <Box
+                      key={dept.id}
+                      onClick={() => { setSearchName(dept.name); runSearch(dept.name); }}
+                      sx={{
+                        px: 2, py: 1,
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        color: '#1A1A1A',
+                        borderBottom: '1px solid #EDE9E4',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        '&:hover': { bgcolor: '#1C1C28', color: '#D97757' },
+                        '&:last-child': { borderBottom: 'none' },
+                      }}
+                    >
+                      <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.6rem', color: '#C8C4BC' }}>#{dept.id}</Typography>
+                      {dept.name}
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </Box>
+            <Button type="submit" variant="outlined" color="primary" sx={{ flexShrink: 0, px: 2.5 }}>
+              <SearchIcon sx={{ fontSize: 16 }} />
+            </Button>
+          </Box>
 
-            {/* ── Find Department ────────────────────────── */}
-            <div className="card">
-                <div className="card-header">Find Department</div>
-                <div className="card-body">
-                    <form onSubmit={handleSearchSubmit}>
-                        <div className="d-flex gap-2">
-                            <input
-                                className="form-control"
-                                placeholder="Search by name"
-                                value={searchName}
-                                onChange={handleSearchInput}
-                                autoComplete="off"
-                            />
-                            <button
-                                type="submit"
-                                className={`btn ${searchName.trim() ? 'btn-primary' : 'btn-secondary'}`}
-                            >Find</button>
-                        </div>
-                    </form>
+          {searchMsg && <Alert severity="error" sx={{ mt: 1.5, borderRadius: 0, py: 0.25, fontSize: '0.78rem' }}>{searchMsg}</Alert>}
 
-                    {suggestions.length > 0 && (
-                        <div className="suggestions-box mt-1">
-                            {suggestions.map(dept => (
-                                <div
-                                    key={dept.id}
-                                    className="suggestion-item"
-                                    onClick={() => pickSuggestion(dept.name)}
-                                >
-                                    {dept.name}
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {searchMsg && <p className="msg-error mt-2">{searchMsg}</p>}
-
-                    {searchResult && (
-                        <div className="mt-3">
-                            <table className="table">
-                                <tbody>
-                                    <tr>
-                                        <td style={{ color: '#f97316', width: '35%', fontWeight: 600 }}>ID</td>
-                                        <td style={{ color: '#1e293b' }}>{searchResult.id}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style={{ color: '#f97316', fontWeight: 600 }}>Name</td>
-                                        <td style={{ color: '#1e293b' }}>{searchResult.name}</td>
-                                    </tr>
-                                    {empCount !== null && (
-                                        <tr>
-                                            <td style={{ color: '#f97316', fontWeight: 600 }}>Employees</td>
-                                            <td style={{ color: '#1e293b' }}>{empCount}</td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
+          {/* Result */}
+          {searchResult && (
+            <Box sx={{ mt: 2, border: '1px solid #E0DDD8', borderLeft: '3px solid #D97757' }}>
+              {[
+                { label: 'ID',         value: <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', color: '#D97757', fontSize: '0.85rem' }}>#{searchResult.id}</Typography> },
+                { label: 'NAME',       value: searchResult.name },
+                { label: 'EMPLOYEES',  value: empCount !== null ? <Chip label={`${empCount} members`} size="small" sx={{ bgcolor: 'rgba(46,125,94,0.08)', color: '#2E7D5E', border: '1px solid rgba(46,125,94,0.25)', borderRadius: 0, fontFamily: '"JetBrains Mono", monospace', fontSize: '0.65rem' }} /> : '—' },
+              ].map(({ label, value }, i, arr) => (
+                <Box key={label} sx={{ display: 'flex', alignItems: 'center', px: 2.5, py: 1.5, borderBottom: i < arr.length - 1 ? '1px solid #EDE9E4' : 'none' }}>
+                  <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.6rem', letterSpacing: '2px', color: '#8A8A8A', width: 110, flexShrink: 0 }}>
+                    {label}
+                  </Typography>
+                  <Box sx={{ color: '#1A1A1A', fontSize: '0.875rem' }}>{value}</Box>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Box>
+      </Box>
+    </Box>
+  );
 }
 
 export default DepartmentComponent;

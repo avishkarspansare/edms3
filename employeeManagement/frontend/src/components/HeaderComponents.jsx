@@ -17,7 +17,6 @@ function HeaderComponents() {
         key={to}
         component={Link}
         to={to}
-        variant={active ? 'contained' : 'text'}
         size="small"
         sx={{
           ml: 1,
@@ -26,13 +25,15 @@ function HeaderComponents() {
           letterSpacing: '1.5px',
           fontFamily: '"JetBrains Mono", monospace',
           fontWeight: 600,
-          color: active ? '#0A0A0F' : '#6B7280',
-          bgcolor: active ? '#00D4FF' : 'transparent',
+          color: active ? '#1A1A1A' : '#A8A8A8',
+          bgcolor: active ? '#D97757' : 'transparent',
           px: 2,
           py: 0.75,
+          border: active ? '1px solid #D97757' : '1px solid #3A3A3A',
           '&:hover': {
-            bgcolor: active ? '#00B8E0' : 'rgba(0,212,255,0.06)',
-            color: active ? '#0A0A0F' : '#00D4FF',
+            bgcolor: active ? '#B85C35' : 'rgba(217,119,87,0.12)',
+            color: active ? '#FFFFFF' : '#D97757',
+            borderColor: '#D97757',
           },
         }}
       >
@@ -44,7 +45,7 @@ function HeaderComponents() {
   return (
     <AppBar position="sticky" elevation={0}>
       <Toolbar>
-        <PeopleAltIcon sx={{ color: '#00D4FF', mr: 1.5, fontSize: 18 }} />
+        <PeopleAltIcon sx={{ color: '#D97757', mr: 1.5, fontSize: 18 }} />
         <Typography
           variant="h6"
           component={Link}
@@ -54,7 +55,7 @@ function HeaderComponents() {
             fontWeight: 700,
             fontSize: '0.9rem',
             letterSpacing: '1px',
-            color: '#F0F0F0',
+            color: '#F5F4F2',
             textDecoration: 'none',
             flexGrow: 1,
           }}

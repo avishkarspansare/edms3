@@ -64,10 +64,10 @@ function EmployeeForm() {
   return (
     <Box sx={{ maxWidth: 480, mx: 'auto', px: 3 }}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="overline" sx={{ color: '#00D4FF', display: 'block', mb: 0.25 }}>
+        <Typography variant="overline" sx={{ color: '#D97757', display: 'block', mb: 0.25 }}>
           {isEdit ? 'MODIFY RECORD' : 'NEW RECORD'}
         </Typography>
-        <Typography variant="h4" sx={{ color: '#F0F0F0', fontSize: '1.4rem' }}>
+        <Typography variant="h4" sx={{ color: '#1A1A1A', fontSize: '1.4rem' }}>
           {isEdit ? 'Edit Employee' : 'Add Employee'}
         </Typography>
       </Box>
@@ -75,7 +75,7 @@ function EmployeeForm() {
       <Box
         component="form"
         onSubmit={handleSubmit}
-        sx={{ border: '1px solid #1C1C28', p: 3, bgcolor: '#111118' }}
+        sx={{ border: '1px solid #E0DDD8', p: 3, bgcolor: '#FFFFFF' }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
           {fields.map(({ name, label, type }) => (
@@ -101,7 +101,7 @@ function EmployeeForm() {
               onChange={handleChange}
               label="Department"
             >
-              <MenuItem value=""><em style={{ color: '#6B7280', fontSize: '0.85rem' }}>No Department (Bench)</em></MenuItem>
+              <MenuItem value=""><em style={{ color: '#8A8A8A', fontSize: '0.85rem' }}>No Department (Bench)</em></MenuItem>
               {departments.map(dept => (
                 <MenuItem key={dept.id} value={String(dept.id)}>{dept.name}</MenuItem>
               ))}
